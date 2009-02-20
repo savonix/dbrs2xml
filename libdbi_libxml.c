@@ -7,6 +7,8 @@ Author:     Albert Lash
 #include <stdio.h>
 #include <string.h>
 #include <dbi/dbi.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 /*
 http://xmlsoft.org/examples/tree2.c
@@ -64,51 +66,46 @@ print_table_data_xml(dbi_result *result, char *query_name)
   char *myval;
   char *elt;
   ulong myint;
-  dbi_result_get_field_name(result,0);
-  printf("<?xml version=\"1.0\"?>\n");
-  printf("<");
-  printf(query_name);
-  printf(">\n");
+  xmlDocPtr doc = NULL;
+  xmlNodePtr root_node = NULL, node = NULL, node1 = NULL;
+    doc = xmlNewDoc(BAD_CAST "1.0");
+    root_node = xmlNewNode(NULL, BAD_CAST "root");
+    xmlDocSetRootElement(doc, root_node);
+    top_query = xmlNewChild(root_node, NULL, BAD_CAST query_name,NULL);
+    dbi_result_get_field_name(result,0);
+
   uint i;
   while (dbi_result_next_row(result))
   {
-    printf("\t<");
-    printf(query_name);
-    printf(">\n");
+    xmlNewChild(top_query, NULL, BAD_CAST query_name,NULL);
     for (i=1; i < dbi_result_get_numfields(result); i++)
     {
-        printf("\t\t<");
-        elt = strdup(dbi_result_get_field_name(result,i));
-        printf("%s",elt,(uint) strlen(elt));
-        printf(">");
         if (dbi_result_get_field_type_idx(result,i) == 3) {
             if (dbi_result_get_string_idx(result,i))
             {
-
-                xmlencode_print(dbi_result_get_string_idx(result,i),dbi_result_get_field_length_idx(result,i));
+                xmlNewChild(query_row, NULL, BAD_CAST dbi_result_get_field_name(result,i),dbi_result_get_string_idx(result,i));
             }
         }
         if (dbi_result_get_field_type_idx(result,i) == 1) {
             if (dbi_result_get_ulonglong_idx(result,i))
             {
-                myint = dbi_result_get_ulonglong_idx(result,i);
-                printf("%u",myint);
+                xmlNewChild(query_row, NULL, BAD_CAST dbi_result_get_field_name(result,i),dbi_result_get_ulonglong_idx(result,i));
             }
         }
-        printf("</");
-        printf("%s",elt,(uint) strlen(elt));
-        printf(">\n");
-        free(elt);
     }
-    (void) printf("\t</");
-    (void) printf(query_name);
-    (void) printf(">\n");
 
   }
-  printf("</");
-  printf(query_name);
-  printf(">\n");
 
+    xmlSaveFormatFileEnc(argc > 1 ? argv[1] : "-", doc, "UTF-8", 1);
+    
+    /*free the document */
+    xmlFreeDoc(doc);
+    
+    /*
+     *Free the global variables that may
+     *have been allocated by the parser.
+     */
+    xmlCleanupParser();
 }
 
 

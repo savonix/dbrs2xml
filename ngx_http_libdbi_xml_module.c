@@ -9,6 +9,9 @@
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <dbi/dbi.h>
+/*
+http://xmlsoft.org/examples/tree2.c
+*/
 
 static char *ngx_http_libdbi_xml(ngx_conf_t *cf, ngx_command_t *cmd,
     void *conf);
