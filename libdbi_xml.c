@@ -6,15 +6,11 @@ Author:     Albert Lash
 --> */
 #include <stdio.h>
 #include <string.h>
-#include <my_global.h>
-#include "mysql.h"
-#include "mysql_version.h"
-#include "mysqld_error.h"
-#include <m_string.h>
-#include <signal.h>
+#include <dbi/dbi.h>
+
 
 static void xmlencode_print(const char *src, uint length);
-static void print_table_data_xml(MYSQL_RES *result, char *query_name);
+static void print_table_data_xml(RES *result, char *query_name);
 
 static const char *xmlmeta[] = {
   "&", "&amp;",
@@ -25,51 +21,49 @@ static const char *xmlmeta[] = {
 };
 
 
-int mysql_exec_sql(MYSQL *mysql,const char *create_definition)
-{
-   return mysql_real_query(mysql,create_definition,strlen(create_definition));
-}
 
 int main()
-
 {
 
-MYSQL mysql;
-char record[1000];
-MYSQL_RES *result;
-MYSQL_ROW row;
+    dbi_conn conn;
+    dbi_result result;
 
-unsigned int num_fields;
-unsigned int i;
-char query_def[1000];
+    double threshold = 4.333333;
+    unsigned int idnumber;
+    const char *fullname;
+    
+    dbi_initialize(NULL);
+    conn = dbi_conn_new("mysql");
 
-   mysql_init(&mysql);
+    dbi_conn_set_option(conn, "host", "localhost");
+    dbi_conn_set_option(conn, "username", "your_name");
+    dbi_conn_set_option(conn, "password", "your_password");
+    dbi_conn_set_option(conn, "dbname", "your_dbname");
+    dbi_conn_set_option(conn, "encoding", "UTF-8");
 
-   mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"blah");
-
-    if (!mysql_real_connect(&mysql,"host","username","password","database",0,NULL,0))
-    {
-    } else {
-    strmov(query_def,"SELECT * from bb_ib_forums");
-
-    if(mysql_exec_sql(&mysql,query_def)==0)
-    {
-        result = mysql_store_result(&mysql);
-    } else {
-        printf( "Error" );
+    if (dbi_conn_connect(conn) < 0) {
+      printf("Could not connect. Please check the option settings\n");
     }
-    print_table_data_xml(result,"forums_get_all");
-}
+    else {
+      result = dbi_conn_queryf(conn, "SELECT * from bb_ib_forums", threshold);
+
+      if (result) {
+
+        dbi_result_free(result);
+      }
+      dbi_conn_close(conn);
+    }
+
 }
 
 
 
 
 static void
-print_table_data_xml(MYSQL_RES *result, char *query_name)
+print_table_data_xml(RES *result, char *query_name)
 {
-  MYSQL_ROW   cur;
-  MYSQL_FIELD *fields;
+  ROW   cur;
+  FIELD *fields;
   mysql_field_seek(result,0);
   printf("<?xml version=\"1.0\"?>\n");
   printf("<");
