@@ -20,9 +20,7 @@ static const char *xmlmeta[] = {
   0, 0
 };
 
-
-
-int main()
+int main(int argc, char *argv[])
 {
 
     dbi_conn conn;
@@ -35,11 +33,8 @@ int main()
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
 
-    dbi_conn_set_option(conn, "host", "");
-    dbi_conn_set_option(conn, "username", "");
-    dbi_conn_set_option(conn, "password", "");
-    dbi_conn_set_option(conn, "dbname", "");
-    dbi_conn_set_option(conn, "encoding", "UTF-8");
+    #include "connection.c"
+
 
     if (dbi_conn_connect(conn) < 0) {
       printf("Could not connect. Please check the option settings\n");
@@ -65,7 +60,7 @@ print_table_data_xml(dbi_result *result, char *query_name)
   dbi_result   cur;
   dbi_result *fields;
   char *myval;
-  char *myname;
+  char *elt;
   ulong myint;
   dbi_result_get_field_name(result,0);
   printf("<?xml version=\"1.0\"?>\n");
@@ -81,13 +76,14 @@ print_table_data_xml(dbi_result *result, char *query_name)
     for (i=1; i < dbi_result_get_numfields(result); i++)
     {
         printf("\t\t<");
-        myname = strdup(dbi_result_get_field_name(result,i));
-        printf("%s",myname);
+        elt = strdup(dbi_result_get_field_name(result,i));
+        printf("%s",elt,(uint) strlen(elt));
         printf(">");
         if (dbi_result_get_field_type_idx(result,i) == 3) {
             if (dbi_result_get_string_idx(result,i))
             {
-                printf(dbi_result_get_string_idx(result,i));
+
+                xmlencode_print(dbi_result_get_string_idx(result,i),dbi_result_get_field_length_idx(result,i));
             }
         }
         if (dbi_result_get_field_type_idx(result,i) == 1) {
@@ -98,9 +94,9 @@ print_table_data_xml(dbi_result *result, char *query_name)
             }
         }
         printf("</");
-        printf(myname);
+        printf("%s",elt,(uint) strlen(elt));
         printf(">\n");
-        free(myname);
+        free(elt);
     }
     (void) printf("\t</");
     (void) printf(query_name);
@@ -134,10 +130,11 @@ xmlencode_print(const char *src, uint length)
     for (p = src; *p && length; *p++, length--)
     {
       const char *t;
-      if ((t = array_value(xmlmeta, *p)))
-    printf(t);
-      else
-    printf(*p);
+      if ((t = array_value(xmlmeta, *p))) {
+          printf(t);
+      } else {
+          printf("%c",*p);
+      }
     }
   }
 }
