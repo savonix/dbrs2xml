@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 
     #include "connection.c"
 
-
     if (dbi_conn_connect(conn) < 0) {
       printf("Could not connect. Please check the option settings\n");
     }
