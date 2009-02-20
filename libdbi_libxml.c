@@ -14,7 +14,7 @@ Author:     Albert Lash
 http://xmlsoft.org/examples/tree2.c
 */
 
-static void xmlencode_print(const char *src, uint length);
+static void xmlencode_print(const char *src, unsigned int length);
 static void print_table_data_xml(dbi_result *result, char *query_name);
 
 static const char *xmlmeta[] = {
@@ -65,38 +65,42 @@ print_table_data_xml(dbi_result *result, char *query_name)
   dbi_result *fields;
   char *myval;
   char *elt;
-  ulong myint;
+  unsigned long myint;
+  char buffer[100];
   xmlDocPtr doc = NULL;
-  xmlNodePtr root_node = NULL, node = NULL, node1 = NULL;
+  xmlNodePtr root_node = NULL, node = NULL, top_query = NULL, query_row = NULL;
     doc = xmlNewDoc(BAD_CAST "1.0");
     root_node = xmlNewNode(NULL, BAD_CAST "root");
     xmlDocSetRootElement(doc, root_node);
     top_query = xmlNewChild(root_node, NULL, BAD_CAST query_name,NULL);
-    dbi_result_get_field_name(result,0);
 
-  uint i;
+  unsigned int i;
   while (dbi_result_next_row(result))
   {
-    xmlNewChild(top_query, NULL, BAD_CAST query_name,NULL);
+
+    query_row = xmlNewChild(top_query, NULL, BAD_CAST elt,NULL);
     for (i=1; i < dbi_result_get_numfields(result); i++)
     {
+        elt = strdup(dbi_result_get_field_name(result,i));
         if (dbi_result_get_field_type_idx(result,i) == 3) {
             if (dbi_result_get_string_idx(result,i))
             {
-                xmlNewChild(query_row, NULL, BAD_CAST dbi_result_get_field_name(result,i),dbi_result_get_string_idx(result,i));
+                xmlNewChild(query_row, NULL, BAD_CAST elt,dbi_result_get_string_idx(result,i));
             }
         }
         if (dbi_result_get_field_type_idx(result,i) == 1) {
             if (dbi_result_get_ulonglong_idx(result,i))
             {
-                xmlNewChild(query_row, NULL, BAD_CAST dbi_result_get_field_name(result,i),dbi_result_get_ulonglong_idx(result,i));
+                myint = dbi_result_get_ulonglong_idx(result,i);
+                sprintf(buffer, "%i", myint);
+                xmlNewChild(query_row, NULL, BAD_CAST elt, buffer);
             }
         }
     }
 
   }
 
-    xmlSaveFormatFileEnc(argc > 1 ? argv[1] : "-", doc, "UTF-8", 1);
+    xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
     
     /*free the document */
     xmlFreeDoc(doc);
@@ -109,31 +113,3 @@ print_table_data_xml(dbi_result *result, char *query_name)
 }
 
 
-static const char *array_value(const char **array, char key)
-{
-  for (; *array; array+= 2)
-    if (**array == key)
-      return array[1];
-  return 0;
-}
-
-
-static void
-xmlencode_print(const char *src, uint length)
-{
-  if (!src)
-    printf("NULL");
-  else
-  {
-    const char *p;
-    for (p = src; *p && length; *p++, length--)
-    {
-      const char *t;
-      if ((t = array_value(xmlmeta, *p))) {
-          printf(t);
-      } else {
-          printf("%c",*p);
-      }
-    }
-  }
-}
