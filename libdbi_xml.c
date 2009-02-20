@@ -10,7 +10,7 @@ Author:     Albert Lash
 
 
 static void xmlencode_print(const char *src, uint length);
-static void print_table_data_xml(RES *result, char *query_name);
+static void print_table_data_xml(dbi_result *result, char *query_name);
 
 static const char *xmlmeta[] = {
   "&", "&amp;",
@@ -31,14 +31,14 @@ int main()
     double threshold = 4.333333;
     unsigned int idnumber;
     const char *fullname;
-    
+
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
 
-    dbi_conn_set_option(conn, "host", "localhost");
-    dbi_conn_set_option(conn, "username", "your_name");
-    dbi_conn_set_option(conn, "password", "your_password");
-    dbi_conn_set_option(conn, "dbname", "your_dbname");
+    dbi_conn_set_option(conn, "host", "");
+    dbi_conn_set_option(conn, "username", "");
+    dbi_conn_set_option(conn, "password", "");
+    dbi_conn_set_option(conn, "dbname", "");
     dbi_conn_set_option(conn, "encoding", "UTF-8");
 
     if (dbi_conn_connect(conn) < 0) {
@@ -48,7 +48,7 @@ int main()
       result = dbi_conn_queryf(conn, "SELECT * from bb_ib_forums", threshold);
 
       if (result) {
-
+        print_table_data_xml(result,"forums_get_all");
         dbi_result_free(result);
       }
       dbi_conn_close(conn);
@@ -60,37 +60,47 @@ int main()
 
 
 static void
-print_table_data_xml(RES *result, char *query_name)
+print_table_data_xml(dbi_result *result, char *query_name)
 {
-  ROW   cur;
-  FIELD *fields;
-  mysql_field_seek(result,0);
+  dbi_result   cur;
+  dbi_result *fields;
+  char *myval;
+  char *myname;
+  ulong myint;
+  dbi_result_get_field_name(result,0);
   printf("<?xml version=\"1.0\"?>\n");
   printf("<");
   printf(query_name);
   printf(">\n");
-  fields = mysql_fetch_fields(result);
   uint i;
-  while ((cur = mysql_fetch_row(result)))
+  while (dbi_result_next_row(result))
   {
-    ulong *lengths=mysql_fetch_lengths(result);
     printf("\t<");
     printf(query_name);
     printf(">\n");
-    for (i=0; i < mysql_num_fields(result); i++)
+    for (i=1; i < dbi_result_get_numfields(result); i++)
     {
-      printf("\t\t<");
-      printf(fields[i].name, (uint) strlen(fields[i].name));
-      if (cur[i])
-      {
+        printf("\t\t<");
+        myname = strdup(dbi_result_get_field_name(result,i));
+        printf("%s",myname);
         printf(">");
-        printf(cur[i], lengths[i]);
+        if (dbi_result_get_field_type_idx(result,i) == 3) {
+            if (dbi_result_get_string_idx(result,i))
+            {
+                printf(dbi_result_get_string_idx(result,i));
+            }
+        }
+        if (dbi_result_get_field_type_idx(result,i) == 1) {
+            if (dbi_result_get_ulonglong_idx(result,i))
+            {
+                myint = dbi_result_get_ulonglong_idx(result,i);
+                printf("%u",myint);
+            }
+        }
         printf("</");
-        printf(fields[i].name, (uint) strlen(fields[i].name));
+        printf(myname);
         printf(">\n");
-      }
-      else
-        printf("\" xsi:nil=\"true\" />\n");
+        free(myname);
     }
     (void) printf("\t</");
     (void) printf(query_name);
