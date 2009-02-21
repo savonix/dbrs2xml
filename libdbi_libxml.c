@@ -10,7 +10,7 @@ Author:     Albert Lash
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 /* compile with:
-gcc `xml2-config --cflags --libs`  -lm -ldl -ldbi libdbi_libxml.c
+gcc -Wall -pedantic `xml2-config --cflags --libs`  -lm -ldl -ldbi libdbi_libxml.c
 */
 
 static void print_table_data_xml(dbi_result *result, char *query_name);
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
         }
         dbi_conn_close(conn);
     }
-
+    return 0;
 }
 
 
@@ -58,19 +58,18 @@ int main(int argc, char *argv[])
 static void
 print_table_data_xml(dbi_result *result, char *query_name)
 {
-    dbi_result   cur;
     char *elt;
-    unsigned long myint;
+    unsigned long mylong;
     char buffer[100];
+    unsigned int i;
 
     xmlDocPtr doc = NULL;
-    xmlNodePtr root_node = NULL, node = NULL, top_query = NULL, query_row = NULL;
+    xmlNodePtr root_node = NULL, top_query = NULL, query_row = NULL;
     doc = xmlNewDoc(BAD_CAST "1.0");
     root_node = xmlNewNode(NULL, BAD_CAST "_R_");
     xmlDocSetRootElement(doc, root_node);
     top_query = xmlNewChild(root_node, NULL, BAD_CAST query_name,NULL);
 
-    unsigned int i;
     while (dbi_result_next_row(result))
     {
 
@@ -81,15 +80,15 @@ print_table_data_xml(dbi_result *result, char *query_name)
             if (dbi_result_get_field_type_idx(result,i) == 3) {
                 if (dbi_result_get_string_idx(result,i))
                 {
-                    xmlNewChild(query_row, NULL, BAD_CAST elt,dbi_result_get_string_idx(result,i));
+                    xmlNewChild(query_row, NULL, BAD_CAST elt, BAD_CAST dbi_result_get_string_idx(result,i));
                 }
             }
             if (dbi_result_get_field_type_idx(result,i) == 1) {
                 if (dbi_result_get_ulonglong_idx(result,i))
                 {
-                    myint = dbi_result_get_ulonglong_idx(result,i);
-                    sprintf(buffer, "%i", myint);
-                    xmlNewChild(query_row, NULL, BAD_CAST elt, buffer);
+                    mylong = dbi_result_get_ulonglong_idx(result,i);
+                    sprintf(buffer, "%ld", mylong);
+                    xmlNewChild(query_row, NULL, BAD_CAST elt, BAD_CAST buffer);
                 }
             }
         }
