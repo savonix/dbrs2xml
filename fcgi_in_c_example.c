@@ -9,11 +9,10 @@
  gcc -Wall -pedantic `xml2-config --cflags --libs` -I/usr/include  -L/usr/lib -lfcgi -lm -ldl -ldbi fcgi_in_c_example.c -o fcgi_in_c_example
 */
 
-int count;
 int i;
 int qnum;
 xmlDocPtr doc = NULL;
-xmlNodePtr root_node = NULL, env_node = NULL, get_node = NULL, post_node = NULL;
+xmlNodePtr root_node = NULL, env_node = NULL, get_node = NULL, post_node = NULL, cookie_node = NULL;
 xmlChar *myxml = NULL;
 int mylen;
 char *qname;
@@ -23,7 +22,6 @@ Q_ENTRY *req;
 
 void initialize(void)
 {
-    count=0;
     doc = xmlNewDoc(BAD_CAST "1.0");
     root_node = xmlNewNode(NULL, BAD_CAST "_R_");
     xmlDocSetRootElement(doc, root_node);
@@ -55,7 +53,7 @@ int main()
         qget = qCgiRequestParseQueries(NULL, "GET");
         qnum = qEntryGetNum(qget);
         /* Create children */
-        for(i=0;i<qnum;i++) {
+        for(i=0; i<qnum; i++) {
             qname = (char *)qEntryGetName(qget);
             qvalue = (char *)qEntryGetValue(qget);
             xmlNewChild(get_node, NULL, BAD_CAST qname, BAD_CAST qvalue);
@@ -68,10 +66,22 @@ int main()
         qget = qCgiRequestParseQueries(NULL, "POST");
         qnum = qEntryGetNum(qget);
         /* Create children */
-        for(i=0;i<qnum;i++) {
+        for(i=0; i<qnum; i++) {
             qname = (char *)qEntryGetName(qget);
             qvalue = (char *)qEntryGetValue(qget);
             xmlNewChild(post_node, NULL, BAD_CAST qname, BAD_CAST qvalue);
+        }
+
+        /* Cookie variables */
+        cookie_node = xmlNewChild(root_node, NULL, BAD_CAST "COOKIE", NULL);
+        /* Parse queries. */
+        qget = qCgiRequestParseCookies(NULL);
+        qnum = qEntryGetNum(qget);
+        /* Create children */
+        for(i=0; i<qnum; i++) {
+            qname = (char *)qEntryGetName(qget);
+            qvalue = (char *)qEntryGetValue(qget);
+            xmlNewChild(cookie_node, NULL, BAD_CAST qname, BAD_CAST qvalue);
         }
 
 
@@ -87,6 +97,8 @@ int main()
         xmlFreeNode(get_node);
         xmlUnlinkNode(post_node);
         xmlFreeNode(post_node);
+        xmlUnlinkNode(cookie_node);
+        xmlFreeNode(cookie_node);
     }
 
     xmlFreeDoc(doc);
