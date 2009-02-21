@@ -65,6 +65,9 @@ print_table_data_xml(dbi_result *result, char *query_name)
 
     xmlDocPtr doc = NULL;
     xmlNodePtr root_node = NULL, top_query = NULL, query_row = NULL;
+    /*
+    root_node = xmlDocGetRootElement(doc);
+    */
     doc = xmlNewDoc(BAD_CAST "1.0");
     root_node = xmlNewNode(NULL, BAD_CAST "_R_");
     xmlDocSetRootElement(doc, root_node);

@@ -14,6 +14,8 @@
 int count;
 xmlDocPtr doc = NULL;
 xmlNodePtr root_node = NULL, env_node = NULL, get_node = NULL, post_node = NULL;
+xmlChar *myxml = NULL;
+int mylen;
 
 void initialize(void)
 {
@@ -40,13 +42,24 @@ int main()
 
 
         /* Get variables */
-        env_node = xmlNewChild(root_node, NULL, BAD_CAST "_get", NULL);
+        get_node = xmlNewChild(root_node, NULL, BAD_CAST "_get", NULL);
 
         /* Post variables */
-        env_node = xmlNewChild(root_node, NULL, BAD_CAST "_post", NULL);
+        post_node = xmlNewChild(root_node, NULL, BAD_CAST "_post", NULL);
 
         /* Output XML */
-        xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
+        mylen = xmlStrlen(myxml);
+        xmlDocDumpMemoryEnc(doc, &myxml, &mylen, "UTF-8");
+        printf("Content-type: text/xml\r\n"
+               "\r\n"
+               "%s",myxml);
+        xmlUnlinkNode(env_node);
+        xmlFreeNode(env_node);
+        xmlUnlinkNode(get_node);
+        xmlFreeNode(get_node);
+        xmlUnlinkNode(post_node);
+        xmlFreeNode(post_node);
+        /* xmlSaveFormatFileEnc("-", doc, "UTF-8", 1); */
     }
 
     xmlFreeDoc(doc);
