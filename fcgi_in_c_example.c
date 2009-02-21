@@ -6,8 +6,11 @@
 #include <dbi/dbi.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 #include <stdbool.h>
 #include "qDecoder.h"
+
 /*
  gcc -Wall -pedantic `xml2-config --cflags --libs` -I/usr/include  -L/usr/lib -lfcgi -lm -ldl -ldbi fcgi_in_c_example.c -o fcgi_in_c_example
 */
@@ -26,8 +29,11 @@ dbi_conn conn;
 dbi_result result;
 double threshold = 4.333333;
 char *myq;
+char *file;
 
 static xmlNodePtr query_doc(dbi_result *result, char *query_name);
+static char query_handler(void);
+static char parse_query(char *file);
 
 void initialize(void)
 {
@@ -36,7 +42,7 @@ void initialize(void)
     xmlDocSetRootElement(doc, root_node);
 }
 
-int main()
+int main(void)
 {
 
     initialize();
@@ -46,7 +52,7 @@ int main()
         env_node = xmlNewChild(root_node, NULL, BAD_CAST "ENV", NULL);
         xmlNewChild(env_node, NULL, BAD_CAST "SERVER_HOSTNAME", BAD_CAST getenv("SERVER_HOSTNAME"));
         xmlNewChild(env_node, NULL, BAD_CAST "SCRIPT_FILENAME", BAD_CAST getenv("SCRIPT_FILENAME"));
-        xmlNewChild(env_node, NULL, BAD_CAST "QUERY_STRING", BAD_CAST qCgiRequestGetQueryString("GET"));
+        xmlNewChild(env_node, NULL, BAD_CAST "QUERY_STRING", BAD_CAST qEncodeUrl(getenv("SCRIPT_FILENAME")));
         xmlNewChild(env_node, NULL, BAD_CAST "REQUEST_METHOD", BAD_CAST getenv("REQUEST_METHOD"));
         xmlNewChild(env_node, NULL, BAD_CAST "CONTENT_TYPE", BAD_CAST getenv("CONTENT_TYPE"));
         xmlNewChild(env_node, NULL, BAD_CAST "CONTENT_LENGTH", BAD_CAST getenv("CONTENT_LENGTH"));
@@ -93,26 +99,6 @@ int main()
 
 
         sql_node = xmlNewChild(root_node, NULL, BAD_CAST "SQL", NULL);
-        req = qCgiRequestParse(NULL);
-        myq   = strdup((char *)qEntryGetStr(req,"query"));
-        qname = "noname";
-
-        dbi_initialize(NULL);
-        conn = dbi_conn_new("mysql");
-
-        #include "connection.c"
-
-        if (dbi_conn_connect(conn) < 0) {
-            printf("Could not connect. Please check the option settings and if the" \
-                "specific driver is available\n");
-        } else {
-            result = dbi_conn_queryf(conn, myq, threshold);
-            if (result) {
-            xmlAddChild(sql_node,query_doc(result,qname));
-            dbi_result_free(result);
-            }
-            dbi_conn_close(conn);
-        }
 
 
 
@@ -147,6 +133,39 @@ int main()
     return 0;
 }
 
+static char
+query_handler(void)
+{
+    req = qCgiRequestParse(NULL);
+    myq   = (char *)qEntryGetStr(req,"query");
+    if(myq == NULL) {
+        myq = "SELECT NULL";
+    }
+    qname = "noname";
+    dbi_initialize(NULL);
+    conn = dbi_conn_new("mysql");
+    #include "connection.c"
+    if (dbi_conn_connect(conn) < 0) {
+        printf("Could not connect. Please check the option settings and if the" \
+            "specific driver is available\n");
+    } else {
+        result = dbi_conn_queryf(conn, myq, threshold);
+        if (result) {
+        xmlAddChild(sql_node,query_doc(result,qname));
+        dbi_result_free(result);
+        }
+        dbi_conn_close(conn);
+    }
+    return 0;
+
+}
+
+static char
+parse_query(char *file)
+{
+    return 0;
+
+}
 
 
 static xmlNodePtr
@@ -167,7 +186,7 @@ query_doc(dbi_result *result, char *query_name)
     {
 
         query_row = xmlNewChild(top_query, NULL, BAD_CAST query_name,NULL);
-        for (i=1; i < dbi_result_get_numfields(result); i++)
+        for (i=1; i < dbi_result_get_numfields(result) + 1; i++)
         {
             elt = strdup(dbi_result_get_field_name(result,i));
             if (dbi_result_get_field_type_idx(result,i) == 3) {
