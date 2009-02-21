@@ -29,6 +29,7 @@ int main()
     initialize();
 
     while (FCGI_Accept() >= 0)   {
+        /* Environment variables */
         env_node = xmlNewChild(root_node, NULL, BAD_CAST "_env", NULL);
         xmlNewChild(env_node, NULL, BAD_CAST "SERVER_HOSTNAME", BAD_CAST getenv("SERVER_HOSTNAME"));
         xmlNewChild(env_node, NULL, BAD_CAST "SCRIPT_FILENAME", BAD_CAST getenv("SCRIPT_FILENAME"));
@@ -38,6 +39,13 @@ int main()
         xmlNewChild(env_node, NULL, BAD_CAST "CONTENT_LENGTH", BAD_CAST getenv("CONTENT_LENGTH"));
 
 
+        /* Get variables */
+        env_node = xmlNewChild(root_node, NULL, BAD_CAST "_get", NULL);
+
+        /* Post variables */
+        env_node = xmlNewChild(root_node, NULL, BAD_CAST "_post", NULL);
+
+        /* Output XML */
         xmlSaveFormatFileEnc("-", doc, "UTF-8", 1);
     }
 
