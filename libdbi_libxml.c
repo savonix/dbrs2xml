@@ -23,8 +23,15 @@ int main(int argc, char *argv[])
     dbi_result result;
 
     double threshold = 4.333333;
-    const char myq[1000];
-    const char qname[255];
+    char *myq;
+    char *qname;
+    if (argc < 3) {
+        myq   = "SELECT NULL";
+        qname = "noname";
+    } else {
+        myq   = argv[1];
+        qname = argv[2];
+    }
 
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
@@ -35,9 +42,9 @@ int main(int argc, char *argv[])
         printf("Could not connect. Please check the option settings and if the" \
             "specific driver is available\n");
     } else {
-        result = dbi_conn_queryf(conn, argv[1], threshold);
+        result = dbi_conn_queryf(conn, myq, threshold);
         if (result) {
-        print_table_data_xml(result,argv[2]);
+        print_table_data_xml(result,qname);
         dbi_result_free(result);
         }
         dbi_conn_close(conn);
