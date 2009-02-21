@@ -32,7 +32,7 @@ int main()
 
     while (FCGI_Accept() >= 0)   {
         /* Environment variables */
-        env_node = xmlNewChild(root_node, NULL, BAD_CAST "_env", NULL);
+        env_node = xmlNewChild(root_node, NULL, BAD_CAST "ENV", NULL);
         xmlNewChild(env_node, NULL, BAD_CAST "SERVER_HOSTNAME", BAD_CAST getenv("SERVER_HOSTNAME"));
         xmlNewChild(env_node, NULL, BAD_CAST "SCRIPT_FILENAME", BAD_CAST getenv("SCRIPT_FILENAME"));
         xmlNewChild(env_node, NULL, BAD_CAST "QUERY_STRING", BAD_CAST getenv("QUERY_STRING"));
@@ -42,10 +42,10 @@ int main()
 
 
         /* Get variables */
-        get_node = xmlNewChild(root_node, NULL, BAD_CAST "_get", NULL);
+        get_node = xmlNewChild(root_node, NULL, BAD_CAST "GET", NULL);
 
         /* Post variables */
-        post_node = xmlNewChild(root_node, NULL, BAD_CAST "_post", NULL);
+        post_node = xmlNewChild(root_node, NULL, BAD_CAST "POST", NULL);
 
         /* Output XML */
         mylen = xmlStrlen(myxml);
