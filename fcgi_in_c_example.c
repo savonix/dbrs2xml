@@ -1,6 +1,9 @@
 #include <fcgi_stdio.h>
 #include <fcgiapp.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <dbi/dbi.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 #include <stdbool.h>
@@ -12,13 +15,20 @@
 int i;
 int qnum;
 xmlDocPtr doc = NULL;
-xmlNodePtr root_node = NULL, env_node = NULL, get_node = NULL, post_node = NULL, cookie_node = NULL;
+xmlNodePtr root_node = NULL, env_node = NULL, sql_node=NULL, get_node = NULL, post_node = NULL, cookie_node = NULL;
 xmlChar *myxml = NULL;
 int mylen;
 char *qname;
 char *qvalue;
 Q_ENTRY *qget;
 Q_ENTRY *req;
+dbi_conn conn;
+dbi_result result;
+
+double threshold = 4.333333;
+char *myq;
+
+static xmlNodePtr query_doc(dbi_result *result, char *query_name);
 
 void initialize(void)
 {
@@ -85,6 +95,40 @@ int main()
         }
 
 
+
+
+        sql_node = xmlNewChild(root_node, NULL, BAD_CAST "SQL", NULL);
+        myq   = "SELECT * from bb_ib_forums";
+        qname = "noname";
+
+        dbi_initialize(NULL);
+        conn = dbi_conn_new("mysql");
+
+        #include "connection.c"
+        
+        if (dbi_conn_connect(conn) < 0) {
+            printf("Could not connect. Please check the option settings and if the" \
+                "specific driver is available\n");
+        } else {
+            result = dbi_conn_queryf(conn, myq, threshold);
+            if (result) {
+            xmlAddChild(sql_node,query_doc(result,qname));
+            dbi_result_free(result);
+            }
+            dbi_conn_close(conn);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
         /* Output XML */
         mylen = xmlStrlen(myxml);
         xmlDocDumpMemoryEnc(doc, &myxml, &mylen, "UTF-8");
@@ -99,9 +143,59 @@ int main()
         xmlFreeNode(post_node);
         xmlUnlinkNode(cookie_node);
         xmlFreeNode(cookie_node);
+        xmlUnlinkNode(sql_node);
+        xmlFreeNode(sql_node);
     }
 
     xmlFreeDoc(doc);
     xmlCleanupParser();
     return 0;
+}
+
+
+
+static xmlNodePtr
+query_doc(dbi_result *result, char *query_name)
+{
+    char *elt;
+    unsigned long mylong;
+    char buffer[100];
+    unsigned int i;
+
+    xmlDocPtr doc = NULL;
+    xmlNodePtr top_query = NULL, query_row = NULL;
+    doc = xmlNewDoc(BAD_CAST "1.0");
+    top_query = xmlNewNode(NULL, BAD_CAST query_name);
+    xmlDocSetRootElement(doc, top_query);
+
+    while (dbi_result_next_row(result))
+    {
+
+        query_row = xmlNewChild(top_query, NULL, BAD_CAST query_name,NULL);
+        for (i=1; i < dbi_result_get_numfields(result); i++)
+        {
+            elt = strdup(dbi_result_get_field_name(result,i));
+            if (dbi_result_get_field_type_idx(result,i) == 3) {
+                if (dbi_result_get_string_idx(result,i))
+                {
+                    xmlNewChild(query_row, NULL, BAD_CAST elt, BAD_CAST dbi_result_get_string_idx(result,i));
+                }
+            }
+            if (dbi_result_get_field_type_idx(result,i) == 1) {
+                if (dbi_result_get_ulonglong_idx(result,i))
+                {
+                    mylong = dbi_result_get_ulonglong_idx(result,i);
+                    sprintf(buffer, "%ld", mylong);
+                    xmlNewChild(query_row, NULL, BAD_CAST elt, BAD_CAST buffer);
+                }
+            }
+        }
+
+    }
+
+    return xmlDocGetRootElement(doc);
+
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+
 }
