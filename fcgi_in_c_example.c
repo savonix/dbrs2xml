@@ -62,9 +62,6 @@ int main()
         }
 
 
-
-
-
         /* Post variables */
         post_node = xmlNewChild(root_node, NULL, BAD_CAST "POST", NULL);
         /* Parse queries. */
@@ -77,19 +74,19 @@ int main()
             xmlNewChild(post_node, NULL, BAD_CAST qname, BAD_CAST qvalue);
         }
 
+
         /* Output XML */
         mylen = xmlStrlen(myxml);
         xmlDocDumpMemoryEnc(doc, &myxml, &mylen, "UTF-8");
-        printf("Content-type: text/xml\r\n"
-               "\r\n"
-               "%s",myxml);
+        printf("Content-type: text/xml\r\n\r\n%s",myxml);
+
+        /* Free everything under the root */
         xmlUnlinkNode(env_node);
         xmlFreeNode(env_node);
         xmlUnlinkNode(get_node);
         xmlFreeNode(get_node);
         xmlUnlinkNode(post_node);
         xmlFreeNode(post_node);
-        /* xmlSaveFormatFileEnc("-", doc, "UTF-8", 1); */
     }
 
     xmlFreeDoc(doc);
