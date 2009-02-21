@@ -34,10 +34,6 @@ int main(int argc, char *argv[])
     double threshold = 4.333333;
     unsigned int idnumber;
     const char *fullname;
-    char my_query[1255];
-    unsigned long myint;
-
-    myint = 100000;
 
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
@@ -46,13 +42,10 @@ int main(int argc, char *argv[])
 
     if (dbi_conn_connect(conn) < 0) {
         printf("Could not connect. Please check the option settings\n");
-    }
-    else {
-        sprintf(my_query, "SELECT * from bb_ib_forums WHERE forum_id < %i", myint);
-        result = dbi_conn_queryf(conn, my_query, threshold);
-
+    } else {
+        result = dbi_conn_queryf(conn, argv[1], threshold);
         if (result) {
-        print_table_data_xml(result,"forums_get_all");
+        print_table_data_xml(result,argv[2]);
         dbi_result_free(result);
         }
         dbi_conn_close(conn);
@@ -67,23 +60,22 @@ static void
 print_table_data_xml(dbi_result *result, char *query_name)
 {
     dbi_result   cur;
-    dbi_result *fields;
-    char *myval;
     char *elt;
     unsigned long myint;
     char buffer[100];
+
     xmlDocPtr doc = NULL;
     xmlNodePtr root_node = NULL, node = NULL, top_query = NULL, query_row = NULL;
     doc = xmlNewDoc(BAD_CAST "1.0");
-    root_node = xmlNewNode(NULL, BAD_CAST "root");
+    root_node = xmlNewNode(NULL, BAD_CAST "_R_");
     xmlDocSetRootElement(doc, root_node);
     top_query = xmlNewChild(root_node, NULL, BAD_CAST query_name,NULL);
-    
+
     unsigned int i;
     while (dbi_result_next_row(result))
     {
 
-        query_row = xmlNewChild(top_query, NULL, BAD_CAST elt,NULL);
+        query_row = xmlNewChild(top_query, NULL, BAD_CAST query_name,NULL);
         for (i=1; i < dbi_result_get_numfields(result); i++)
         {
             elt = strdup(dbi_result_get_field_name(result,i));
