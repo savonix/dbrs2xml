@@ -3,7 +3,10 @@
 #include <stdlib.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-
+#include <stdbool.h>
+/*
+#include "qDecoder.h"
+*/
 /*
  gcc -Wall -pedantic `xml2-config --cflags --libs` -I/usr/include  -L/usr/lib -lfcgi -lm -ldl -ldbi fcgi_in_c_example.c -o fcgi_in_c_example
 */
