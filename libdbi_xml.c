@@ -32,7 +32,10 @@ int main(int argc, char *argv[])
     double threshold = 4.333333;
     unsigned int idnumber;
     const char *fullname;
+    char my_query[1255];
+    unsigned long myint;
 
+    myint = 100000;
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
 
@@ -40,15 +43,16 @@ int main(int argc, char *argv[])
 
     if (dbi_conn_connect(conn) < 0) {
       printf("Could not connect. Please check the option settings\n");
-    }
-    else {
-      result = dbi_conn_queryf(conn, "SELECT * from bb_ib_forums", threshold);
+    } else {
 
-      if (result) {
+        sprintf(my_query, "SELECT * from bb_ib_forums WHERE forum_ib < %i", myint);
+        result = dbi_conn_queryf(conn, my_query, threshold);
+
+        if (result) {
         print_table_data_xml(result,"forums_get_all");
         dbi_result_free(result);
-      }
-      dbi_conn_close(conn);
+        }
+        dbi_conn_close(conn);
     }
 
 }
