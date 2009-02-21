@@ -24,7 +24,6 @@ Q_ENTRY *qget;
 Q_ENTRY *req;
 dbi_conn conn;
 dbi_result result;
-
 double threshold = 4.333333;
 char *myq;
 
@@ -93,17 +92,16 @@ int main()
         }
 
 
-
-
         sql_node = xmlNewChild(root_node, NULL, BAD_CAST "SQL", NULL);
-        myq   = "SELECT * from bb_ib_forums";
+        req = qCgiRequestParse(NULL);
+        myq   = strdup((char *)qEntryGetStr(req,"query"));
         qname = "noname";
 
         dbi_initialize(NULL);
         conn = dbi_conn_new("mysql");
 
         #include "connection.c"
-        
+
         if (dbi_conn_connect(conn) < 0) {
             printf("Could not connect. Please check the option settings and if the" \
                 "specific driver is available\n");
@@ -131,7 +129,6 @@ int main()
         mylen = xmlStrlen(myxml);
         xmlDocDumpMemoryEnc(doc, &myxml, &mylen, "UTF-8");
         printf("Content-type: text/xml\r\n\r\n%s",myxml);
-
         /* Free everything under the root */
         xmlUnlinkNode(env_node);
         xmlFreeNode(env_node);
