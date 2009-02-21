@@ -9,21 +9,12 @@ Author:     Albert Lash
 #include <dbi/dbi.h>
 #include <libxml/parser.h>
 #include <libxml/tree.h>
-
-/*
-http://xmlsoft.org/examples/tree2.c
+/* compile with:
+gcc `xml2-config --cflags --libs`  -lm -ldl -ldbi libdbi_libxml.c
 */
 
-static void xmlencode_print(const char *src, unsigned int length);
 static void print_table_data_xml(dbi_result *result, char *query_name);
 
-static const char *xmlmeta[] = {
-  "&", "&amp;",
-  "<", "&lt;",
-  ">", "&gt;",
-  "\"", "&quot;",
-  0, 0
-};
 
 int main(int argc, char *argv[])
 {
@@ -32,8 +23,8 @@ int main(int argc, char *argv[])
     dbi_result result;
 
     double threshold = 4.333333;
-    unsigned int idnumber;
-    const char *fullname;
+    const char myq[1000];
+    const char qname[255];
 
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
@@ -41,7 +32,8 @@ int main(int argc, char *argv[])
     #include "connection.c"
 
     if (dbi_conn_connect(conn) < 0) {
-        printf("Could not connect. Please check the option settings\n");
+        printf("Could not connect. Please check the option settings and if the" \
+            "specific driver is available\n");
     } else {
         result = dbi_conn_queryf(conn, argv[1], threshold);
         if (result) {
