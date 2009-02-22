@@ -17,7 +17,8 @@
 
 int i;
 int qnum;
-xmlDocPtr doc = NULL;
+xmlDtdPtr config_dtd = NULL;
+xmlDocPtr doc = NULL, sitemap_doc = NULL, config_doc = NULL;
 xmlNodePtr root_node = NULL, env_node = NULL, sql_node=NULL, get_node = NULL, post_node = NULL, cookie_node = NULL;
 xmlChar *myxml = NULL;
 int mylen;
@@ -30,13 +31,17 @@ dbi_result result;
 double threshold = 4.333333;
 char *myq;
 char *file;
-
+char *sitemap_file;
+char *config_file;
+char *config_dtd_file;
 static xmlNodePtr query_doc(dbi_result *result, char *query_name);
-static char query_handler(void);
+static char query_handler(char *qname, char *myq);
 static char parse_query(char *file);
 
 void initialize(void)
 {
+    xmlInitParser();
+    xmlSubstituteEntitiesDefault(1);
     doc = xmlNewDoc(BAD_CAST "1.0");
     root_node = xmlNewNode(NULL, BAD_CAST "_R_");
     xmlDocSetRootElement(doc, root_node);
@@ -48,6 +53,11 @@ int main(void)
     initialize();
 
     while (FCGI_Accept() >= 0)   {
+        if (config_doc == NULL) {
+            config_doc = xmlParseFile(getenv("CONFIG_FILE"));
+            /* xmlAddChild(root_node,xmlDocGetRootElement(config_doc)); */
+        }
+
         /* Environment variables */
         env_node = xmlNewChild(root_node, NULL, BAD_CAST "ENV", NULL);
         xmlNewChild(env_node, NULL, BAD_CAST "SERVER_HOSTNAME", BAD_CAST getenv("SERVER_HOSTNAME"));
@@ -56,9 +66,6 @@ int main(void)
         xmlNewChild(env_node, NULL, BAD_CAST "REQUEST_METHOD", BAD_CAST getenv("REQUEST_METHOD"));
         xmlNewChild(env_node, NULL, BAD_CAST "CONTENT_TYPE", BAD_CAST getenv("CONTENT_TYPE"));
         xmlNewChild(env_node, NULL, BAD_CAST "CONTENT_LENGTH", BAD_CAST getenv("CONTENT_LENGTH"));
-
-
-
 
         /* Get variables */
         get_node = xmlNewChild(root_node, NULL, BAD_CAST "GET", NULL);
@@ -98,8 +105,10 @@ int main(void)
         }
 
 
-        sql_node = xmlNewChild(root_node, NULL, BAD_CAST "SQL", NULL);
 
+
+
+        sql_node = xmlNewChild(root_node, NULL, BAD_CAST "SQL", NULL);
 
 
 
@@ -133,15 +142,18 @@ int main(void)
     return 0;
 }
 
+
+
 static char
-query_handler(void)
+query_handler(char *qname, char *myq)
 {
-    req = qCgiRequestParse(NULL);
-    myq   = (char *)qEntryGetStr(req,"query");
+
     if(myq == NULL) {
         myq = "SELECT NULL";
     }
-    qname = "noname";
+    if(qname == NULL) {
+        qname = "noname";
+    }
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
     #include "connection.c"
@@ -163,6 +175,9 @@ query_handler(void)
 static char
 parse_query(char *file)
 {
+
+
+
     return 0;
 
 }
