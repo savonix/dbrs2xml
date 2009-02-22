@@ -56,7 +56,11 @@ int main(void)
     int size;
     char buffer[100];
     int debug = 0;
+    const xmlChar *name, *value;
+    int ret;
+
     initialize();
+
 
     while (FCGI_Accept() >= 0)   {
         if (config_doc == NULL) {
@@ -74,7 +78,16 @@ int main(void)
             }
             sprintf(buffer, "%s", sitemap_file);
             xmlNewChild(root_node, NULL, BAD_CAST "sitemap", BAD_CAST buffer);
+            reader = xmlReaderForFile(buffer, NULL, 0);
 
+            ret = xmlTextReaderRead(reader);
+            while (ret == 1) {
+                name = xmlTextReaderConstName(reader);
+                value = xmlTextReaderConstValue(reader);
+
+                ret = xmlTextReaderRead(reader);
+            }
+            xmlFreeTextReader(reader);
         }
 
         /* Environment variables */
