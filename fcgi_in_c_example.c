@@ -8,6 +8,7 @@
 #include <libxml/tree.h>
 #include <libxml/xpath.h>
 #include <libxml/xpathInternals.h>
+#include <libxml/xmlreader.h>
 #include <stdbool.h>
 #include "qDecoder.h"
 
@@ -37,7 +38,9 @@ static xmlNodePtr query_doc(dbi_result *result, char *query_name);
 static char query_handler(char *qname, char *myq);
 static char parse_query(char *file);
 xmlXPathContextPtr xpathCtx;
-xmlXPathObjectPtr xpathObj; 
+xmlXPathObjectPtr xpathObj;
+xmlTextReaderPtr reader;
+
 
 void initialize(void)
 {
@@ -52,12 +55,15 @@ int main(void)
 {
     int size;
     char buffer[100];
+    int debug = 0;
     initialize();
 
     while (FCGI_Accept() >= 0)   {
         if (config_doc == NULL) {
             config_doc = xmlParseFile(getenv("CONFIG_FILE"));
-            xmlAddChild(root_node,xmlDocGetRootElement(config_doc));
+            if (debug == 1) {
+                xmlAddChild(root_node,xmlDocGetRootElement(config_doc));
+            }
             xpathCtx = xmlXPathNewContext(config_doc);
             xpathObj = xmlXPathEvalExpression(BAD_CAST "//sitemap", xpathCtx);
             size = xpathObj->nodesetval->nodeNr;
