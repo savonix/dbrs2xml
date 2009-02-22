@@ -19,8 +19,8 @@ int i;
 int qnum;
 xmlDtdPtr config_dtd = NULL;
 xmlDocPtr doc = NULL, sitemap_doc = NULL, config_doc = NULL;
-xmlNodePtr root_node = NULL, env_node = NULL, sql_node=NULL, get_node = NULL, post_node = NULL, cookie_node = NULL;
-xmlChar *myxml = NULL;
+xmlNodePtr root_node = NULL, sitemap_children = NULL, env_node = NULL, sql_node=NULL, get_node = NULL, post_node = NULL, cookie_node = NULL;
+xmlChar *myxml = NULL, *sitemap_file = NULL;
 int mylen;
 char *qname;
 char *qvalue;
@@ -31,12 +31,13 @@ dbi_result result;
 double threshold = 4.333333;
 char *myq;
 char *file;
-char *sitemap_file;
 char *config_file;
 char *config_dtd_file;
 static xmlNodePtr query_doc(dbi_result *result, char *query_name);
 static char query_handler(char *qname, char *myq);
 static char parse_query(char *file);
+xmlXPathContextPtr xpathCtx;
+xmlXPathObjectPtr xpathObj; 
 
 void initialize(void)
 {
@@ -49,13 +50,25 @@ void initialize(void)
 
 int main(void)
 {
-
+    int size;
+    char buffer[100];
     initialize();
 
     while (FCGI_Accept() >= 0)   {
         if (config_doc == NULL) {
             config_doc = xmlParseFile(getenv("CONFIG_FILE"));
-            /* xmlAddChild(root_node,xmlDocGetRootElement(config_doc)); */
+            xmlAddChild(root_node,xmlDocGetRootElement(config_doc));
+            xpathCtx = xmlXPathNewContext(config_doc);
+            xpathObj = xmlXPathEvalExpression(BAD_CAST "//sitemap", xpathCtx);
+            size = xpathObj->nodesetval->nodeNr;
+            sitemap_children = xpathObj->nodesetval->nodeTab[0]->children;
+            sitemap_file = sitemap_children->content;
+            if(sitemap_file == NULL) {
+                sitemap_file = "nothing";
+            }
+            sprintf(buffer, "%s", sitemap_file);
+            xmlNewChild(root_node, NULL, BAD_CAST "sitemap", BAD_CAST buffer);
+
         }
 
         /* Environment variables */
