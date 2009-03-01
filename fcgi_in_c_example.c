@@ -13,7 +13,7 @@
 #include "qDecoder.h"
 
 /*
- gcc -Wall -pedantic `xml2-config --cflags --libs` -I/usr/include  -L/usr/lib -lfcgi -lm -ldl -ldbi fcgi_in_c_example.c -o fcgi_in_c_example
+gcc `xml2-config --cflags --libs` -I/usr/local/include  -L/usr/local/lib -lqDecoder -lfcgi -lm -ldl -ldbi fcgi_in_c_example.c -o fcgi_in_c_example
 */
 
 int i;
@@ -106,11 +106,10 @@ int main(void)
 
 
 
-
-
         sql_node = xmlNewChild(root_node, NULL, BAD_CAST "SQL", NULL);
 
 
+        query_handler("blah","SELECT 'arf'");
 
 
 
