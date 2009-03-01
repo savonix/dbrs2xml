@@ -36,7 +36,6 @@ char *config_file;
 char *config_dtd_file;
 static xmlNodePtr query_doc(dbi_result *result, char *query_name);
 static char query_handler(char *qname, char *myq);
-static char parse_query(char *file);
 xmlXPathContextPtr xpathCtx;
 xmlXPathObjectPtr xpathObj;
 xmlTextReaderPtr reader;
@@ -53,42 +52,11 @@ void initialize(void)
 
 int main(void)
 {
-    int size;
-    char buffer[100];
-    int debug = 0;
-    const xmlChar *name, *value;
-    int ret;
 
     initialize();
 
 
     while (FCGI_Accept() >= 0)   {
-        if (config_doc == NULL) {
-            config_doc = xmlParseFile(getenv("CONFIG_FILE"));
-            if (debug == 1) {
-                xmlAddChild(root_node,xmlDocGetRootElement(config_doc));
-            }
-            xpathCtx = xmlXPathNewContext(config_doc);
-            xpathObj = xmlXPathEvalExpression(BAD_CAST "//sitemap", xpathCtx);
-            size = xpathObj->nodesetval->nodeNr;
-            sitemap_children = xpathObj->nodesetval->nodeTab[0]->children;
-            sitemap_file = sitemap_children->content;
-            if(sitemap_file == NULL) {
-                sitemap_file = "nothing";
-            }
-            sprintf(buffer, "%s", sitemap_file);
-            xmlNewChild(root_node, NULL, BAD_CAST "sitemap", BAD_CAST buffer);
-            reader = xmlReaderForFile(buffer, NULL, 0);
-
-            ret = xmlTextReaderRead(reader);
-            while (ret == 1) {
-                name = xmlTextReaderConstName(reader);
-                value = xmlTextReaderConstValue(reader);
-
-                ret = xmlTextReaderRead(reader);
-            }
-            xmlFreeTextReader(reader);
-        }
 
         /* Environment variables */
         env_node = xmlNewChild(root_node, NULL, BAD_CAST "ENV", NULL);
@@ -203,17 +171,6 @@ query_handler(char *qname, char *myq)
     return 0;
 
 }
-
-static char
-parse_query(char *file)
-{
-
-
-
-    return 0;
-
-}
-
 
 static xmlNodePtr
 query_doc(dbi_result *result, char *query_name)
