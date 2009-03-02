@@ -16,6 +16,12 @@
 gcc `xml2-config --cflags --libs` -I/usr/local/include  -L/usr/local/lib -lqDecoder -lfcgi -lm -ldl -ldbi fcgi_in_c_example.c -o fcgi_in_c_example
 */
 
+/*
+Additional ideas:
+- use libtidy to clean out the contents of pre tags
+- use pcre to...
+*/
+
 int i;
 int qnum;
 xmlDtdPtr config_dtd = NULL;
