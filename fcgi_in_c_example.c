@@ -33,9 +33,10 @@ double threshold = 4.333333;
 char *myq;
 char *file;
 char *config_file;
+char *query_name;
 char *config_dtd_file;
 static xmlNodePtr query_doc(dbi_result *result, char *query_name);
-static char query_handler(char *qname, char *myq);
+static char query_handler(char *query_name, char *myq);
 xmlXPathContextPtr xpathCtx;
 xmlXPathObjectPtr xpathObj;
 xmlTextReaderPtr reader;
@@ -57,6 +58,7 @@ int main(void)
 
 
     while (FCGI_Accept() >= 0)   {
+        query_name = getenv("SQL_NAME");
 
         /* Environment variables */
         env_node = xmlNewChild(root_node, NULL, BAD_CAST "ENV", NULL);
@@ -107,9 +109,8 @@ int main(void)
 
 
         sql_node = xmlNewChild(root_node, NULL, BAD_CAST "SQL", NULL);
-
-
-        query_handler("blah","SELECT 'arf'");
+        myq = getenv("SQL_QUERY");
+        query_handler(query_name,myq);
 
 
 
@@ -144,14 +145,17 @@ int main(void)
 
 
 static char
-query_handler(char *qname, char *myq)
+query_handler(char *query_name, char *myq)
 {
 
     if(myq == NULL) {
         myq = "SELECT NULL";
     }
-    if(qname == NULL) {
-        qname = "noname";
+    if(query_name == NULL) {
+        query_name = "noname";
+    }
+    if(query_name == "") {
+        query_name = "noname";
     }
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
@@ -162,7 +166,7 @@ query_handler(char *qname, char *myq)
     } else {
         result = dbi_conn_queryf(conn, myq, threshold);
         if (result) {
-        xmlAddChild(sql_node,query_doc(result,qname));
+        xmlAddChild(sql_node,query_doc(result,query_name));
         dbi_result_free(result);
         }
         dbi_conn_close(conn);
