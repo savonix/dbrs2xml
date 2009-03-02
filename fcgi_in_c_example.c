@@ -19,7 +19,9 @@ gcc `xml2-config --cflags --libs` -I/usr/local/include  -L/usr/local/lib -lqDeco
 /*
 Additional ideas:
 - use libtidy to clean out the contents of pre tags
+- http://tidy.sourceforge.net/libintro.html
 - use pcre to...
+- hook to source-highlight?
 */
 
 int i;
@@ -129,7 +131,7 @@ int main(void)
         /* Output XML */
         mylen = xmlStrlen(myxml);
         xmlDocDumpMemoryEnc(doc, &myxml, &mylen, "UTF-8");
-        printf("Content-type: text/xml\r\n\r\n%s",myxml);
+        printf("Content-type: application/xhtml+xml\r\n\r\n%s",myxml);
         /* Free everything under the root */
         xmlUnlinkNode(env_node);
         xmlFreeNode(env_node);
