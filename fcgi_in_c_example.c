@@ -167,7 +167,11 @@ query_handler(char *query_name, char *myq)
     }
     dbi_initialize(NULL);
     conn = dbi_conn_new("mysql");
-    #include "connection.c"
+    dbi_conn_set_option(conn, "host", getenv("DB_HOSTNAME"));
+    dbi_conn_set_option(conn, "username", getenv("DB_USERNAME"));
+    dbi_conn_set_option(conn, "password", getenv("DB_PASSWORD"));
+    dbi_conn_set_option(conn, "dbname", getenv("DB_DATABASE"));
+    dbi_conn_set_option(conn, "encoding", "UTF-8");
     if (dbi_conn_connect(conn) < 0) {
         printf("Could not connect. Please check the option settings and if the" \
             "specific driver is available\n");
